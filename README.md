@@ -1,67 +1,45 @@
-#include <WiFi.h>
-#include <PubSubClient.h>
-#include <DHT.h>
+# ESP32 DHT22 MQTT Publisher
 
+This project reads temperature and humidity data from a DHT22 sensor using an ESP32, and publishes the data to a public MQTT broker over Wi-Fi.
+
+## 📡 Features
+
+- Reads temperature and humidity using DHT22
+- Connects to Wi-Fi (Wokwi-GUEST by default)
+- Publishes sensor data to the MQTT broker `test.mosquitto.org` on topic `wokwi/dht22`
+- Reconnects automatically to Wi-Fi and MQTT if connection is lost
+- Designed to run on Wokwi simulator or a real ESP32 board
+
+## 🧰 Requirements
+
+- **ESP32 board**
+- **DHT22 sensor** connected to GPIO 15
+- Arduino IDE or PlatformIO
+- Libraries:
+  - `WiFi.h`
+  - `PubSubClient.h`
+  - `DHT.h`
+
+## 🔌 Wiring
+
+| DHT22 Pin | ESP32 Pin |
+|-----------|-----------|
+| VCC       | 3.3V      |
+| GND       | GND       |
+| DATA      | GPIO 15   |
+
+## 🔄 MQTT Topic and Payload
+
+- **Topic:** `wokwi/dht22`
+- **Payload format (JSON):**
+  ```json
+  {
+    "temperature": 25.4,
+    "humidity": 60.1
+  }
+🌐 Default Wi-Fi Configuration
+```
 const char* ssid = "Wokwi-GUEST";
 const char* password = "";
-const char* mqtt_server = "test.mosquitto.org";
-const int mqtt_port = 1883;
-const char* mqtt_topic = "wokwi/dht22";
-
-WiFiClient espClient;
-PubSubClient client(espClient);
-DHT dht(15, DHT22);
-
-void setup() {
-  Serial.begin(115200);
-  Serial.println("\nDémarrage du programme...");
-  dht.begin();
-  WiFi.begin(ssid, password);
-  Serial.print("Connexion au WiFi");
-  unsigned long startAttemptTime = millis();
-  while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 20000) { 
-    delay(500);
-    Serial.print(".");}
-
-  if (WiFi.status() == WL_CONNECTED) {
-    Serial.println("\nWiFi connecté !");
-    Serial.print("Adresse IP: ");
-    Serial.println(WiFi.localIP());
-  } else {
-    Serial.println("\nÉchec de connexion WiFi !");}
-    client.setServer(mqtt_server, mqtt_port);}
-
-void reconnect() {
-  while (!client.connected()) {
-    Serial.print("Connexion à MQTT...");
-    if (client.connect("ESP32-Wokwi")) {
-      Serial.println("Connecté à MQTT !");
-    } else {
-      Serial.print("Échec, code d'erreur: ");
-      Serial.println(client.state());
-      Serial.println("Nouvelle tentative dans 5s...");
-      delay(5000);}}}
-
-void checkWiFi() {
-  if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("WiFi perdu ! Tentative de reconnexion...");
-    WiFi.disconnect();
-    WiFi.reconnect();
-    delay(5000);}}
-
-void loop() {
-  checkWiFi();
-  if (!client.connected()) {reconnect();}
-  client.loop();
-
-  float temp = dht.readTemperature();
-  float hum = dht.readHumidity();
-
-  if (!isnan(temp) && !isnan(hum)) {
-    String payload = "{\"temperature\":" + String(temp) + ",\"humidity\":" + String(hum) + "}";
-    client.publish(mqtt_topic, payload.c_str());
-    Serial.println("Publié: " + payload);
-  } else {
-    Serial.println("Erreur de lecture du DHT22 !");}
-
-  delay(5000);}
+```
+You can change this in the code to match your own Wi-Fi credentials if you're using a real MAteriel.
